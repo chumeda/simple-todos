@@ -1,6 +1,5 @@
-/* globals Mongo, Meteor, Template, Session, Accounts */
+/* exported Tasks, Mongo, Meteor, Template, Session, Accounts */
 
-var Tasks;
 Tasks = new Mongo.Collection("tasks");
 
 /**
