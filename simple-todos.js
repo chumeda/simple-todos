@@ -1,9 +1,17 @@
+/* globals Mongo, Meteor, Template, Session, Accounts */
+
+var Tasks;
 Tasks = new Mongo.Collection("tasks");
 
+/**
+ * This code only runs on the server
+ */
 if (Meteor.isServer) {
-  // This code only runs on the server
 
-  // Only publish tasks that are public or belong to the current user
+
+  /**
+   * Only publish tasks that are public or belong to the current user
+   */
   Meteor.publish("tasks", function () {
     return Tasks.find({
       $or: [
@@ -14,14 +22,20 @@ if (Meteor.isServer) {
   });
 }
 
+/**
+ * This code only runs on the client
+ */
 if (Meteor.isClient) {
-  // This code only runs on the client
+
   Meteor.subscribe("tasks");
 
   Template.body.helpers({
+    /**
+     * If hide completed is checked, filter tasks
+     * @returns {*|Mongo.Cursor}
+     */
     tasks: function () {
       if (Session.get("hideCompleted")) {
-        // If hide completed is checked, filter tasks
         return Tasks.find({checked: {$ne: true}}, {sort: {createdAt: -1}});
       }
       else {
@@ -38,8 +52,11 @@ if (Meteor.isClient) {
   });
 
   Template.body.events({
+    /**
+     * Prevent default browser form submit
+     * @param event
+     */
     "submit .new-task": function (event) {
-      // Prevent default browser form submit
       event.preventDefault();
 
       // Get value from form element
@@ -57,19 +74,33 @@ if (Meteor.isClient) {
   });
 
   Template.task.helpers({
+    /**
+     * Determines if the user is the owner of the task
+     * @returns {boolean}
+     */
     isOwner: function () {
       return this.owner === Meteor.userId();
     }
   });
 
   Template.task.events({
+    /**
+     * Set the checked property to the opposite of its current value
+     */
     "click .toggle-checked": function () {
-      // Set the checked property to the opposite of its current value
       Meteor.call("setChecked", this._id, !this.checked);
     },
+
+    /**
+     * Delete task with button
+     */
     "click .delete": function () {
       Meteor.call("deleteTask", this._id);
     },
+
+    /**
+     * Make task private or public
+     */
     "click .toggle-private": function () {
       Meteor.call("setPrivate", this._id, ! this.private);
     }
@@ -80,6 +111,10 @@ if (Meteor.isClient) {
   });
 }
   Meteor.methods({
+    /**
+     * Add a new task
+     * @param text
+     */
     addTask: function (text) {
       // Make sure the user is logged in before inserting a task
       if (! Meteor.userId()) {
@@ -93,6 +128,11 @@ if (Meteor.isClient) {
         username: Meteor.user().username
       });
     },
+
+    /**
+     * Delete a task
+     * @param taskId
+     */
     deleteTask: function (taskId) {
       var task = Tasks.findOne(taskId);
       if (task.private && task.owner !== Meteor.userId()) {
@@ -102,6 +142,12 @@ if (Meteor.isClient) {
 
       Tasks.remove(taskId);
     },
+
+    /**
+     * if task completed make it checked
+     * @param taskId
+     * @param setChecked
+     */
     setChecked: function (taskId, setChecked) {
       var task = Tasks.findOne(taskId);
       if (task.private && task.owner !== Meteor.userId()) {
@@ -111,6 +157,12 @@ if (Meteor.isClient) {
 
       Tasks.update(taskId, { $set: { checked: setChecked} });
     },
+
+    /**
+     * make a task private
+     * @param taskId
+     * @param setToPrivate
+     */
     setPrivate: function (taskId, setToPrivate) {
       var task = Tasks.findOne(taskId);
 
